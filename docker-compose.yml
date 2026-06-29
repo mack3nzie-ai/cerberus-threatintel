@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  cerberus:
+    build: .
+    ports:
+      - "5000:8080"
+    environment:
+      - FLASK_HOST=0.0.0.0
+      - PORT=8080
+      - FLASK_DEBUG=True
+    volumes:
+      # Optional: Persist the sqlite database locally outside the container
+      - db_data:/app/backend
+    restart: unless-stopped
+
+volumes:
+  db_data:

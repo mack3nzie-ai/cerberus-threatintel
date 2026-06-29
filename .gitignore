@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases
+backend/database.db
+
+# SOAR Settings (contains active tokens/secrets in normal deployment)
+backend/webhook_config.json
+.env
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.gemini/
+
+# Operating System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary Scratch Files
+scratch/

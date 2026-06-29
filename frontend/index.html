@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CERBERUS ThreatIntel - OSINT Leak Detection Dashboard</title>
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ChartJS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            950: '#0b0f19', /* solid Sentinel canvas */
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            600: '#475569',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen overflow-x-hidden">
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation (Sleek SIEM Collapsible Drawer) -->
+        <aside id="sidebar"
+            class="fixed top-0 left-0 z-40 h-screen bg-slate-950 border-r border-slate-800/80 flex flex-col transition-all duration-300 w-64 px-4 py-6">
+            <div class="logo-container flex items-center justify-between mb-8 relative">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-shield-halved text-blue-500 text-xl"></i>
+                    <div class="logo-text transition-opacity duration-200">
+                        <span class="font-extrabold text-lg tracking-tight text-white block">CERBERUS</span>
+                        <span class="text-[9px] tracking-[1px] text-blue-400 font-bold block -mt-1">THREAT
+                            INTELLIGENCE</span>
+                    </div>
+                </div>
+                <button id="btn-toggle-sidebar"
+                    class="absolute -right-7 top-1/2 -translate-y-1/2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700/80 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 z-50 cursor-pointer shadow-md"
+                    title="Toggle Sidebar">
+                    <i id="sidebar-toggle-icon"
+                        class="fa-solid fa-angle-left text-xs transition-transform duration-300"></i>
+                </button>
+            </div>
+
+            <nav class="space-y-1.5 flex-grow">
+                <a href="#overview"
+                    class="nav-item active flex items-center gap-3.5 px-4 py-3 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/40 border border-transparent hover:border-slate-800/50 font-medium text-sm transition-all duration-150">
+                    <i class="fa-solid fa-chart-line text-sm w-5 text-center"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="#crawler"
+                    class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/40 border border-transparent hover:border-slate-800/50 font-medium text-sm transition-all duration-150">
+                    <i class="fa-solid fa-terminal text-sm w-5 text-center"></i>
+                    <span class="nav-text">OSINT Crawler</span>
+                </a>
+                <a href="#simulator"
+                    class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/40 border border-transparent hover:border-slate-800/50 font-medium text-sm transition-all duration-150">
+                    <i class="fa-solid fa-bug text-sm w-5 text-center"></i>
+                    <span class="nav-text">Threat Simulator</span>
+                </a>
+                <a href="#alerts"
+                    class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/40 border border-transparent hover:border-slate-800/50 font-medium text-sm transition-all duration-150">
+                    <i class="fa-solid fa-triangle-exclamation text-sm w-5 text-center"></i>
+                    <span class="nav-text">Alerts Table</span>
+                </a>
+                <a href="#investigator"
+                    class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/40 border border-transparent hover:border-slate-800/50 font-medium text-sm transition-all duration-150">
+                    <i class="fa-solid fa-earth-asia text-sm w-5 text-center"></i>
+                    <span class="nav-text">OSINT Investigator</span>
+                </a>
+            </nav>
+
+            <!-- Clean Empty Footer spacing as requested -->
+            <div class="sidebar-footer-brand border-t border-slate-800/80 pt-4 mt-auto">
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main id="main-content"
+            class="flex-grow transition-all duration-300 ml-64 p-8 min-h-screen flex flex-col bg-slate-900">
+            <!-- Top Header (Clean Minimalist Standard SOC layout) -->
+            <header
+                class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 mb-8 border-b border-slate-800/80">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Cerberus Operations Dashboard</h1>
+                    <p class="text-xs text-slate-400 mt-1">Enterprise OSINT & Dark Web Incident Intelligence Portal</p>
+                </div>
+                <div class="flex items-center gap-3 self-start md:self-auto">
+                    <!-- UTC Clock (Essential for SOC operations) -->
+                    <div
+                        class="flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 text-slate-300 px-3 py-1.5 rounded text-xs font-mono">
+                        <i class="fa-regular fa-clock text-slate-400"></i>
+                        <span id="utc-clock">00:00:00 UTC</span>
+                    </div>
+                    <!-- Status Badge -->
+                    <div
+                        class="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded text-xs font-medium">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>MONITORING ENGINE ACTIVE</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Overview Section (Active by Default) -->
+            <section id="overview" class="dashboard-section space-y-6">
+                <!-- Metrics Ribbons -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div
+                        class="bg-slate-800/60 border border-slate-800 rounded-lg p-5 flex items-center justify-between hover:border-slate-700/80 transition-colors shadow-sm">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Alerts
+                                Detected</span>
+                            <span class="text-2xl font-bold text-white block mt-1" id="stat-total-alerts">0</span>
+                        </div>
+                        <div class="bg-blue-500/10 text-blue-400 p-3 rounded-lg text-lg border border-blue-500/10">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-slate-800/60 border border-slate-800 rounded-lg p-5 flex items-center justify-between hover:border-slate-700/80 transition-colors shadow-sm">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">High Severity
+                                Leaks</span>
+                            <span class="text-2xl font-bold text-red-400 block mt-1" id="stat-high-alerts">0</span>
+                        </div>
+                        <div class="bg-red-500/10 text-red-400 p-3 rounded-lg text-lg border border-red-500/10">
+                            <i class="fa-solid fa-biohazard"></i>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-slate-800/60 border border-slate-800 rounded-lg p-5 flex items-center justify-between hover:border-slate-700/80 transition-colors shadow-sm">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Medium/Low
+                                Severity</span>
+                            <span class="text-2xl font-bold text-amber-400 block mt-1" id="stat-med-low-alerts">0</span>
+                        </div>
+                        <div class="bg-amber-500/10 text-amber-400 p-3 rounded-lg text-lg border border-amber-500/10">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-slate-800/60 border border-slate-800 rounded-lg p-5 flex items-center justify-between hover:border-slate-700/80 transition-colors shadow-sm">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sources
+                                Monitored</span>
+                            <span class="text-2xl font-bold text-emerald-400 block mt-1" id="stat-monitored-sources">3
+                                Feeds</span>
+                        </div>
+                        <div
+                            class="bg-emerald-500/10 text-emerald-400 p-3 rounded-lg text-lg border border-emerald-500/10">
+                            <i class="fa-solid fa-network-wired"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Controls (Clean Console Card) -->
+                <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-5">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-blue-500"></i> Control Console
+                    </h3>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button id="btn-trigger-scan"
+                            class="px-4 py-2 text-xs font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-magnifying-glass-chart"></i> Run Threat Scan
+                        </button>
+                        <button id="btn-simulate-leak"
+                            class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-600 transition-colors flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-circle-nodes"></i> Inject Mock Leak
+                        </button>
+                        <button id="btn-clear-db"
+                            class="px-4 py-2 text-xs font-semibold rounded-lg text-red-200 bg-red-950/40 hover:bg-red-900/50 border border-red-900/40 focus:outline-none focus:ring-2 focus:ring-red-900 transition-colors flex items-center gap-2 cursor-pointer md:ml-auto">
+                            <i class="fa-solid fa-trash-can"></i> Clear Database
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SOAR Webhook Settings Integration -->
+                <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-5">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-network-wired text-blue-500"></i> SOAR Webhook Integrations
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                        Automatically forward critical incident alerts to external monitoring channels (e.g. Discord,
+                        Telegram). Enter a real webhook URL or use any dummy string to simulate SOAR event dispatch.
+                    </p>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div class="lg:col-span-2">
+                                <label for="webhook-url" class="block text-xs text-slate-400 mb-1.5 font-medium">Webhook
+                                    URL Endpoint:</label>
+                                <div class="relative flex items-center w-full">
+                                    <input type="password" id="webhook-url"
+                                        placeholder="e.g. https://discord.com/api/webhooks/... or Telegram Bot API"
+                                        class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-lg px-3 py-2 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none pr-10 transition-colors">
+                                    <button type="button" id="btn-toggle-webhook-visibility"
+                                        class="absolute right-3 text-slate-500 hover:text-slate-300 focus:outline-none cursor-pointer"
+                                        title="Toggle Visibility">
+                                        <i class="fa-solid fa-eye-slash text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="webhook-severity"
+                                    class="block text-xs text-slate-400 mb-1.5 font-medium">Min Alert Severity:</label>
+                                <select id="webhook-severity"
+                                    class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-lg px-3 py-2 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer">
+                                    <option value="HIGH">HIGH Only</option>
+                                    <option value="MEDIUM">MEDIUM & Above</option>
+                                    <option value="LOW">LOW & Above</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3 pt-1">
+                            <button id="btn-save-webhook"
+                                class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors flex items-center justify-center gap-2 cursor-pointer flex-1 sm:flex-initial">
+                                <i class="fa-solid fa-save text-slate-400"></i> Save Settings
+                            </button>
+                            <button id="btn-test-webhook"
+                                class="px-4 py-2 text-xs font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 cursor-pointer flex-1 sm:flex-initial">
+                                <i class="fa-solid fa-paper-plane"></i> Send Test
+                            </button>
+                            <div class="text-xs font-mono text-slate-400 flex-grow min-h-[18px] sm:ml-2"
+                                id="webhook-status">
+                                <!-- Loaded dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualizations Grid (Charts) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-5">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4">Alert Severity
+                            Distribution</h3>
+                        <div class="h-[250px] relative">
+                            <canvas id="chart-severity"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-5">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4">Top Incident Sources
+                        </h3>
+                        <div class="h-[250px] relative">
+                            <canvas id="chart-sources"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Crawler Terminal Section -->
+            <section id="crawler" class="dashboard-section hidden space-y-6">
+                <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-5">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                        <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-terminal text-emerald-400"></i> Live Scanning Terminal
+                        </h2>
+                        <span
+                            class="text-[10px] font-bold text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded uppercase font-mono">STDOUT
+                            FEED</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4 leading-relaxed">Run the OSINT engine to crawl simulated Onion
+                        Forums and public Paste sites. The logs of regex signature evaluations are printed below.</p>
+
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden mt-4">
+                        <div
+                            class="bg-slate-900/60 border-b border-slate-800 px-4 py-2 flex items-center justify-between">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-500/70 inline-block"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-yellow-500/70 inline-block"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/70 inline-block"></span>
+                            </div>
+                            <span
+                                class="text-[10px] font-mono text-slate-500 font-medium">aegis_engine@nusa-threatintel:~</span>
+                        </div>
+                        <div class="p-4 h-[350px] overflow-y-auto font-mono text-xs text-slate-300 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-800"
+                            id="terminal-output">
+                            <div class="text-slate-400">[i] System loaded. Click "Run Threat Scan" to begin.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Threat Simulator Section -->
+            <section id="simulator" class="dashboard-section hidden space-y-6">
+                <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-5">
+                    <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-bug text-purple-400"></i> Interactive Leak Simulator
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-6 leading-relaxed">Paste raw credentials, SQL dumps, or logs
+                        containing emails/passwords. The engine will scan it in real-time, matching patterns for
+                        Indonesian government domains, NIKs, or exposed DB strings.</p>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="flex flex-col">
+                            <label for="simulation-input"
+                                class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Paste
+                                Raw Leaked Data / Log Content:</label>
+                            <textarea id="simulation-input" placeholder="Example:
+budi.prasetyo@kemhan.go.id:SuperSecretPassword123!
+Or database config:
+DB_HOST=103.11.45.2 | DB_PASS=admin_pemerintah_pass
+Or NIK dump:
+3273051212890001;Agus Supriyadi;Bandung;08129999123"
+                                class="w-full h-[220px] bg-slate-900 border border-slate-800 text-slate-100 rounded-lg p-3 text-xs font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none placeholder-slate-600 transition-colors"></textarea>
+                            <button id="btn-submit-simulation"
+                                class="mt-4 px-5 py-2.5 text-xs font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 cursor-pointer self-start">
+                                <i class="fa-solid fa-microchip text-blue-200"></i> Analyze and Scan
+                            </button>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-lg p-5 flex flex-col min-h-[250px]"
+                            id="simulation-result">
+                            <div
+                                class="flex-grow flex flex-col items-center justify-center text-center text-slate-500 space-y-3">
+                                <i class="fa-solid fa-magnifying-glass text-3xl opacity-30"></i>
+                                <p class="text-xs">Waiting for scan analysis input...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alerts Table Section -->
+            <section id="alerts" class="dashboard-section hidden space-y-6">
+                <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-5">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-table-list text-blue-500"></i> Detailed Alert Incidents
+                        </h2>
+
+                        <div class="flex flex-wrap items-center gap-3">
+                            <input type="text" id="table-search" placeholder="Search logs, keywords, sources..."
+                                class="bg-slate-900 border border-slate-800 text-slate-100 rounded-lg px-3 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none w-56 transition-colors">
+                            <select id="severity-filter"
+                                class="bg-slate-900 border border-slate-800 text-slate-100 rounded-lg px-3 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer">
+                                <option value="ALL">All Severities</option>
+                                <option value="HIGH">High Severity</option>
+                                <option value="MEDIUM">Medium Severity</option>
+                                <option value="LOW">Low Severity</option>
+                            </select>
+                            <button id="btn-export-csv"
+                                class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-file-csv text-blue-400"></i> Export CSV
+                            </button>
+                            <button id="btn-export-json"
+                                class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-file-code text-purple-400"></i> Export JSON
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto border border-slate-800 rounded-lg bg-slate-950/60">
+                        <table class="w-full text-left border-collapse text-xs text-slate-300">
+                            <thead
+                                class="bg-slate-900/80 border-b border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3.5">ID</th>
+                                    <th class="px-4 py-3.5">Detected At</th>
+                                    <th class="px-4 py-3.5">Source Feed</th>
+                                    <th class="px-4 py-3.5">Severity</th>
+                                    <th class="px-4 py-3.5">Matched Keywords / Indicator</th>
+                                    <th class="px-4 py-3.5 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alerts-table-body" class="divide-y divide-slate-800/60">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- OSINT Target Investigator Section -->
+            <section id="investigator" class="dashboard-section hidden space-y-6">
+                <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-5">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                        <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-earth-asia text-blue-400"></i> OSINT Target Investigator
+                        </h2>
+                        <span
+                            class="text-[10px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded uppercase font-mono">THREAT
+                            INTEL</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-6 leading-relaxed">Investigate an IP Address or Domain target to
+                        check geographical info, ISP records, reputation threat level, and cross-reference records in
+                        our ThreatIntel database.</p>
+
+                    <div class="space-y-6">
+                        <div class="flex gap-2">
+                            <input type="text" id="investigator-input"
+                                placeholder="e.g. bssn.go.id, kemkes.go.id, or 103.22.45.12"
+                                class="flex-grow bg-slate-900 border border-slate-800 text-slate-100 rounded-lg px-4 py-2.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors">
+                            <button id="btn-submit-investigation"
+                                class="px-5 py-2.5 text-xs font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap">
+                                <i class="fa-solid fa-fingerprint"></i> Analyze Target
+                            </button>
+                        </div>
+
+                        <div class="hidden space-y-6" id="investigator-results-container">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <!-- Gauge / Score Card -->
+                                <div
+                                    class="bg-slate-900 border border-slate-800 rounded-lg p-6 flex flex-col items-center justify-center shadow-sm">
+                                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">
+                                        Threat Level Score</h4>
+                                    <div class="relative w-24 h-24 flex items-center justify-center mb-3">
+                                        <div class="w-full h-full rounded-full border-4 border-slate-800 flex items-center justify-center text-3xl font-extrabold font-mono text-white transition-all duration-300"
+                                            id="gauge-circle-element">
+                                            0
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase"
+                                        id="investigator-status-badge">CLEAN</span>
+                                </div>
+
+                                <!-- Metadata Card -->
+                                <div
+                                    class="bg-slate-900 border border-slate-800 rounded-lg p-6 flex flex-col justify-center shadow-sm">
+                                    <h4
+                                        class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-circle-nodes text-slate-500"></i> Target Intelligence
+                                        Profile
+                                    </h4>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span
+                                                class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block mb-0.5">Target
+                                                Type</span>
+                                            <strong id="intel-type"
+                                                class="text-xs text-slate-200 font-medium truncate block">-</strong>
+                                        </div>
+                                        <div>
+                                            <span
+                                                class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block mb-0.5">ISP
+                                                / ASN Network</span>
+                                            <strong id="intel-isp"
+                                                class="text-xs text-slate-200 font-medium truncate block">-</strong>
+                                        </div>
+                                        <div>
+                                            <span
+                                                class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block mb-0.5">Geo
+                                                Location</span>
+                                            <strong id="intel-geo"
+                                                class="text-xs text-slate-200 font-medium truncate block">-</strong>
+                                        </div>
+                                        <div>
+                                            <span
+                                                class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block mb-0.5">Vulnerabilities</span>
+                                            <strong id="intel-cves"
+                                                class="text-xs text-slate-200 font-medium truncate block font-mono">-</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actors/Threat Groups Card -->
+                                <div
+                                    class="bg-slate-900 border border-slate-800 rounded-lg p-6 flex flex-col justify-center shadow-sm space-y-4">
+                                    <div>
+                                        <h4
+                                            class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-skull-crossbones text-slate-500"></i> Associated
+                                            Threat Groups
+                                        </h4>
+                                        <div id="intel-actors" class="flex flex-wrap gap-1.5">
+                                            <span class="text-slate-500 italic text-xs">No known groups.</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4
+                                            class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-door-open text-slate-500"></i> Scanned Open Ports
+                                        </h4>
+                                        <div id="intel-ports" class="flex flex-wrap gap-1.5">
+                                            <!-- Ports loaded dynamically -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Database Cross-Reference List -->
+                            <div class="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                                <h3
+                                    class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <i class="fa-solid fa-magnifying-glass-chart text-blue-500"></i> SQLite ThreatIntel
+                                    Database Cross-References
+                                </h3>
+                                <div class="overflow-x-auto border border-slate-800 rounded-lg bg-slate-950/60">
+                                    <table class="w-full text-left border-collapse text-xs text-slate-300">
+                                        <thead
+                                            class="bg-slate-900/80 border-b border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                            <tr>
+                                                <th class="px-4 py-3">ID</th>
+                                                <th class="px-4 py-3">Detected At</th>
+                                                <th class="px-4 py-3">Source</th>
+                                                <th class="px-4 py-3">Severity</th>
+                                                <th class="px-4 py-3">Indicator Pattern</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="investigator-table-body" class="divide-y divide-slate-800/60">
+                                            <!-- Filled dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty placeholder state -->
+                        <div class="flex flex-col items-center justify-center py-16 text-center text-slate-500 bg-slate-950/20 border border-slate-800 border-dashed rounded-lg"
+                            id="investigator-empty">
+                            <i class="fa-solid fa-fingerprint text-4xl mb-3 opacity-20"></i>
+                            <p class="text-xs">Enter an IP address or domain name above to trace its global Threat
+                                Intelligence status.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Alert Detail Modal -->
+    <div id="detail-modal"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto transition-opacity duration-300">
+        <div
+            class="relative w-full max-w-2xl bg-slate-800 border border-slate-700/80 rounded-lg shadow-xl overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b border-slate-700/80">
+                <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-blue-400"></i> Threat Alert Details
+                </h2>
+                <span
+                    class="close-modal text-slate-400 hover:text-slate-200 bg-slate-700/50 hover:bg-slate-700 rounded-lg p-1.5 text-sm cursor-pointer">&times;</span>
+            </div>
+            <div class="p-6 space-y-4 text-xs text-slate-300">
+                <div class="grid grid-cols-2 gap-4 bg-slate-900/60 p-4 border border-slate-800 rounded-lg">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Source
+                            Feed</span>
+                        <span class="text-xs text-slate-200 font-medium" id="modal-source">-</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Severity</span>
+                        <span class="text-xs font-bold" id="modal-severity">-</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Detected
+                            Time</span>
+                        <span class="text-xs text-slate-200 font-medium" id="modal-time">-</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Identified
+                            Indicator</span>
+                        <span class="text-xs text-blue-400 font-semibold" id="modal-keyword">-</span>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Exposed Payload /
+                        Content:</label>
+                    <pre
+                        class="w-full max-h-[250px] overflow-auto bg-slate-950 border border-slate-800 p-4 rounded-lg font-mono text-[11px] text-slate-300 whitespace-pre-wrap select-all"><code id="modal-raw-content"></code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts binder -->
+    <script src="app.js"></script>
+</body>
+
+</html>
