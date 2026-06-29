@@ -149,46 +149,4 @@ To run the automated security and functionality tests, run:
 python -m backend.test_app
 ```
 
----
 
-## 🛡️ Demonstration Walkthrough (For Interviewers & Tech Leads)
-
-To effectively showcase the defensive automation capabilities of CERBERUS:
-
-1.  **Trigger a Live OSINT Scan:** Click **"Run Threat Scan"** on the dashboard control console. The application will switch to the crawler terminal and stream live logs. It connects to the real URLhaus API, pulls the latest 25 threat indicators, scans them for targeting patterns, and prints the results.
-2.  **Inspect Database Alert Details:** Go to the **Detailed Alert Incidents** table. Double-click any incident row (or click **"View"**) to inspect the raw leaked credentials, exposed database settings, or malware feed parameters safely rendered in a modal dialog.
-3.  **Simulate an Incident (Interactive Demo):**
-    *   Navigate to the **Threat Simulator** tab.
-    *   Paste the following raw credential snippet:
-        ```text
-        CRITICAL VULNERABILITY: Internal database exposed in production.
-        IP Address: 103.22.45.12
-        User Contact: admin_staff@kemhan.go.id
-        db_password = SecureNationalPassword2026!
-        ```
-    *   Click **"Analyze and Scan"**.
-    *   The engine will instantly trigger a `HIGH` severity alert, matching the government domain and database credentials.
-4.  **Autonomic Webhook Alerting (SOAR):** Configure a Discord or Telegram webhook in the console. When the background thread identifies a live threat or when you simulate a custom threat, watch the real-time notification arrive on your chat channel.
-
----
-
-## 🗺️ Project Roadmap & Checklist
-
-This checklist tracks completed implementations and upcoming production features for the CERBERUS engine:
-
-- [x] **Phase 1: Defensive Threat Engine & Dashboard**
-  - [x] Modern glassmorphic dashboard UI with Chart.js analytics.
-  - [x] SQLite relational storage layer for incidents.
-  - [x] Multi-source OSINT API integrations (URLhaus API + OpenPhish Feed).
-  - [x] Asynchronous background daemon scheduler running threat scans.
-- [x] **Phase 2: SOAR Automation & Security Hardening**
-  - [x] Multi-platform webhook integration (Discord & Telegram formats).
-  - [x] Automated webhook payload redaction & truncation (safe logs).
-  - [x] Server-Sent Events (SSE) log-streaming terminal.
-  - [x] Input sanitization (mitigations against SQL Injection & Cross-Site Scripting).
-  - [x] Docker Container Security Hardening (non-root execution).
-- [ ] **Phase 3: Production Scale & Enterprise Integrations**
-  - [ ] Integrate **Have I Been Pwned (HIBP)** API for real-time live compromised email lookup.
-  - [ ] Implement active network OSINT modules (subdomain enumeration & DNS lookup).
-  - [ ] Implement secure User Authentication & Access Control (JWT / Session-based).
-  - [ ] Develop dynamic, user-facing webhook channel configurator in the dashboard.
