@@ -64,20 +64,20 @@ The diagram below illustrates the flow of threat data from external sources and 
 
 ```mermaid
 graph TD
-    A[OSINT Threat Feeds (URLhaus API)] -->|Live API Ingestion| B(Python Tracker Engine)
-    A2[Mock Dark Web Forum Logs] -->|Crawler Simulation| B
-    A3[Exposed Paste Sites] -->|Crawler Simulation| B
+    A["OSINT Threat Feeds (URLhaus API)"] -->|Live API Ingestion| B("Python Tracker Engine")
+    A2["Mock Dark Web Forum Logs"] -->|Crawler Simulation| B
+    A3["Exposed Paste Sites"] -->|Crawler Simulation| B
     
-    B -->|Signature Matching / Regex| C{Risk Engine}
-    C -->|Alert Triggered| D[(SQLite Database)]
+    B -->|Signature Matching / Regex| C{"Risk Engine"}
+    C -->|Alert Triggered| D[("SQLite Database")]
     
-    E[User Payload Input] -->|Interactive Simulator API| C
+    E["User Payload Input"] -->|Interactive Simulator API| C
     
-    D -->|REST JSON Payload| F(Flask API Server)
-    F -->|Serve Static Dashboard| G[Glassmorphic HTML/CSS/JS UI]
+    D -->|REST JSON Payload| F("Flask API Server")
+    F -->|Serve Static Dashboard| G["Glassmorphic HTML/CSS/JS UI"]
     
-    F -->|Server-Sent Events| H[Dashboard Scanning Terminal]
-    D -->|Asynchronous Dispatch| I[SOAR Webhooks: Discord / Telegram]
+    F -->|Server-Sent Events| H["Dashboard Scanning Terminal"]
+    D -->|Asynchronous Dispatch| I["SOAR Webhooks: Discord / Telegram"]
 ```
 
 ---
@@ -169,3 +169,26 @@ To effectively showcase the defensive automation capabilities of CERBERUS:
     *   Click **"Analyze and Scan"**.
     *   The engine will instantly trigger a `HIGH` severity alert, matching the government domain and database credentials.
 4.  **Autonomic Webhook Alerting (SOAR):** Configure a Discord or Telegram webhook in the console. When the background thread identifies a live threat or when you simulate a custom threat, watch the real-time notification arrive on your chat channel.
+
+---
+
+## 🗺️ Project Roadmap & Checklist
+
+This checklist tracks completed implementations and upcoming production features for the CERBERUS engine:
+
+- [x] **Phase 1: Defensive Threat Engine & Dashboard**
+  - [x] Modern glassmorphic dashboard UI with Chart.js analytics.
+  - [x] SQLite relational storage layer for incidents.
+  - [x] Multi-source OSINT API integrations (URLhaus API + OpenPhish Feed).
+  - [x] Asynchronous background daemon scheduler running threat scans.
+- [x] **Phase 2: SOAR Automation & Security Hardening**
+  - [x] Multi-platform webhook integration (Discord & Telegram formats).
+  - [x] Automated webhook payload redaction & truncation (safe logs).
+  - [x] Server-Sent Events (SSE) log-streaming terminal.
+  - [x] Input sanitization (mitigations against SQL Injection & Cross-Site Scripting).
+  - [x] Docker Container Security Hardening (non-root execution).
+- [ ] **Phase 3: Production Scale & Enterprise Integrations**
+  - [ ] Integrate **Have I Been Pwned (HIBP)** API for real-time live compromised email lookup.
+  - [ ] Implement active network OSINT modules (subdomain enumeration & DNS lookup).
+  - [ ] Implement secure User Authentication & Access Control (JWT / Session-based).
+  - [ ] Develop dynamic, user-facing webhook channel configurator in the dashboard.
